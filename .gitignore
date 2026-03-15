@@ -2,6 +2,7 @@
 csv_prefix_tool/build/
 csv_prefix_tool/dist/
 csv_prefix_tool/*.spec
+*.exe
 
 # Python 캐시
 __pycache__/
