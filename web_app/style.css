@@ -1,0 +1,567 @@
+/* =============================================================================
+   style.css — Frutiger Aero 디자인 테마
+
+   Frutiger Aero (2004~2013) 핵심 요소:
+   - 하늘색 그라데이션 배경 (맑은 하늘 느낌)
+   - 유리 패널 (backdrop-filter: blur + 반투명 흰색)
+   - 광택 버튼 (gradient + inset highlight + box-shadow)
+   - 자연광 느낌의 밝고 청량한 색조
+   - 부드러운 곡선 (border-radius)
+============================================================================= */
+
+/* ── CSS 변수 (색상 팔레트) ────────────────────────────────────────────── */
+:root {
+  /* 배경 */
+  --c-sky-top:    #7ECEF4;   /* 창 상단: 선명한 하늘색 */
+  --c-sky-bot:    #DDF1FF;   /* 창 하단: 구름빛 연한 파랑 */
+
+  /* 패널 (유리 효과) */
+  --c-glass:      rgba(255, 255, 255, 0.55);
+  --c-glass-bd:   rgba(255, 255, 255, 0.85);
+  --c-panel-bg:   rgba(230, 246, 255, 0.70);
+
+  /* 그리드 */
+  --c-hdr-bg:     #3BAADE;   /* 열/행 헤더 배경 */
+  --c-hdr-text:   #ffffff;
+  --c-cell-bg:    rgba(255, 255, 255, 0.90);
+  --c-cell-focus: #ffffff;
+  --c-cell-bd:    #90CAF9;
+
+  /* 주 버튼 그라데이션 */
+  --c-btn-top:    #78CFFA;
+  --c-btn-bot:    #1278BE;
+  --c-btn-hover-top: #99DBFC;
+  --c-btn-hover-bot: #1A90D0;
+  --c-btn-press-top: #0E6BA8;
+  --c-btn-press-bot: #084E80;
+  --c-btn-bd:     #0D6FAA;
+
+  /* 보조 버튼 */
+  --c-btn2-top:   #B8E4F5;
+  --c-btn2-bot:   #5AAED8;
+  --c-btn2-hover: #4498C5;
+
+  /* 위험 버튼 */
+  --c-danger-top: #F5B8B8;
+  --c-danger-bot: #D85A5A;
+
+  /* 텍스트 */
+  --c-text-title: #063D6A;
+  --c-text-label: #0D5A96;
+  --c-text-body:  #1A2030;
+  --c-disabled:   #8AAABB;
+
+  /* 기타 */
+  --c-accent:     #00B4D8;
+  --c-shadow:     rgba(0, 80, 160, 0.18);
+
+  /* 폰트 */
+  --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  /* 크기 */
+  --radius-panel: 14px;
+  --radius-btn:   7px;
+  --radius-cell:  4px;
+}
+
+
+/* ── 전역 리셋 & 기본 설정 ──────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-main);
+  font-size: 14px;
+  color: var(--c-text-body);
+
+  /* Frutiger Aero 핵심: 하늘색 → 구름빛 세로 그라데이션 배경 */
+  background: linear-gradient(180deg, var(--c-sky-top) 0%, var(--c-sky-bot) 100%);
+  background-attachment: fixed;   /* 스크롤해도 배경은 고정 */
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* ── 앱 컨테이너 ────────────────────────────────────────────────────────── */
+#app {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+
+/* ── 헤더 ───────────────────────────────────────────────────────────────── */
+#app-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 4px 2px 8px;
+  border-bottom: 2px solid rgba(255,255,255,0.6);
+  text-shadow: 0 1px 3px rgba(0,80,160,0.2);
+}
+
+#app-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--c-text-title);
+}
+
+#app-header .subtitle {
+  font-size: 12px;
+  color: var(--c-text-label);
+  opacity: 0.85;
+}
+
+
+/* ── 유리 패널 ──────────────────────────────────────────────────────────── */
+/*
+  Frutiger Aero의 핵심 요소: 유리(glass) 패널
+  - background: 반투명 흰색/하늘색
+  - backdrop-filter: blur() → 뒤 배경을 흐리게 해 진짜 유리 느낌
+  - border: 반투명 흰 테두리 → 유리 테두리 광택
+  - box-shadow: 부드러운 그림자
+*/
+.panel {
+  background: var(--c-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--c-glass-bd);
+  border-radius: var(--radius-panel);
+  box-shadow:
+    0 4px 20px var(--c-shadow),
+    inset 0 1px 0 rgba(255,255,255,0.8);   /* 상단 내부 광택 */
+  padding: 14px 16px;
+}
+
+.panel-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text-label);
+  margin-bottom: 8px;
+  letter-spacing: 0.02em;
+}
+
+
+/* ── 구분자 선택 패널 ───────────────────────────────────────────────────── */
+#separator-panel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+}
+
+#separator-panel .panel-title {
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+.radio-group {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--c-text-label);
+  font-size: 13px;
+  transition: color 0.15s;
+}
+
+.radio-label:hover { color: var(--c-text-title); }
+
+.radio-label input[type="radio"] {
+  accent-color: var(--c-btn-bot);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+
+/* ── 그리드 패널 ────────────────────────────────────────────────────────── */
+#grid-panel { padding: 12px 14px; }
+
+/* 그리드 컨트롤 버튼 행 */
+.grid-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.ctrl-divider {
+  width: 1px;
+  height: 22px;
+  background: rgba(0, 90, 150, 0.25);
+  margin: 0 4px;
+}
+
+/* 그리드 스크롤 컨테이너 */
+#grid-wrapper {
+  overflow: auto;
+  border-radius: var(--radius-cell);
+  border: 1px solid var(--c-cell-bd);
+  background: var(--c-cell-bg);
+  max-height: 320px;
+}
+
+/* 커스텀 스크롤바 (Chrome/Edge) */
+#grid-wrapper::-webkit-scrollbar { width: 8px; height: 8px; }
+#grid-wrapper::-webkit-scrollbar-track { background: rgba(180,220,245,0.3); }
+#grid-wrapper::-webkit-scrollbar-thumb {
+  background: var(--c-hdr-bg);
+  border-radius: 4px;
+}
+#grid-wrapper::-webkit-scrollbar-thumb:hover { background: var(--c-btn-bot); }
+#grid-wrapper::-webkit-scrollbar-corner { background: transparent; }
+
+/* 그리드 테이블 */
+#csv-grid {
+  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+}
+
+/* 행/열 헤더 */
+#csv-grid th {
+  background: linear-gradient(180deg, #5DC0EC 0%, var(--c-hdr-bg) 100%);
+  color: var(--c-hdr-text);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  padding: 5px 8px;
+  border: 1px solid rgba(255,255,255,0.3);
+  white-space: nowrap;
+  user-select: none;
+  min-width: 40px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  /* 광택 하이라이트 */
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.45);
+}
+
+/* 맨 왼쪽 행 번호 헤더 열 */
+#csv-grid th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  min-width: 36px;
+}
+
+/* 행 번호 td */
+#csv-grid td.row-num {
+  background: linear-gradient(180deg, #5DC0EC 0%, var(--c-hdr-bg) 100%);
+  color: var(--c-hdr-text);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  padding: 3px 6px;
+  border: 1px solid rgba(255,255,255,0.3);
+  user-select: none;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+/* 데이터 셀 */
+#csv-grid td.data-cell {
+  padding: 2px;
+  border: 1px solid var(--c-cell-bd);
+}
+
+/* 셀 안의 input */
+#csv-grid td.data-cell input {
+  width: 110px;
+  height: 28px;
+  padding: 3px 6px;
+  font-family: var(--font-main);
+  font-size: 13px;
+  color: var(--c-text-body);
+  background: var(--c-cell-bg);
+  border: none;
+  outline: none;
+  border-radius: 2px;
+  transition: background 0.1s, box-shadow 0.1s;
+}
+
+#csv-grid td.data-cell input:focus {
+  background: var(--c-cell-focus);
+  box-shadow: inset 0 0 0 2px var(--c-hdr-bg);
+}
+
+
+/* ── 컬럼 필터 바 ───────────────────────────────────────────────────────── */
+#col-filter-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: rgba(200, 235, 255, 0.5);
+  border-radius: 8px;
+  border: 1px solid rgba(144,202,249,0.5);
+}
+
+.filter-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-label);
+  white-space: nowrap;
+}
+
+#col-filter-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.col-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid var(--c-cell-bd);
+  border-radius: 12px;  /* pill 형태 */
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-label);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  user-select: none;
+}
+
+.col-checkbox-label:hover {
+  background: rgba(59,170,222,0.15);
+}
+
+/* 선택 해제된 컬럼: 회색으로 표시 */
+.col-checkbox-label.unchecked {
+  color: var(--c-disabled);
+  border-color: rgba(160,180,200,0.5);
+  background: rgba(200,210,220,0.3);
+  text-decoration: line-through;
+}
+
+.col-checkbox-label input[type="checkbox"] {
+  accent-color: var(--c-btn-bot);
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
+}
+
+
+/* ── 접두 문자열 패널 ───────────────────────────────────────────────────── */
+#prefix-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+#prefix-text {
+  width: 100%;
+  padding: 10px 12px;
+  font-family: var(--font-main);
+  font-size: 13px;
+  color: var(--c-text-body);
+  background: rgba(255,255,255,0.85);
+  border: 1px solid var(--c-cell-bd);
+  border-radius: var(--radius-cell);
+  resize: vertical;
+  outline: none;
+  line-height: 1.6;
+  transition: box-shadow 0.15s, background 0.15s;
+}
+
+#prefix-text:focus {
+  background: #fff;
+  box-shadow: 0 0 0 2px var(--c-hdr-bg);
+}
+
+#prefix-text::placeholder {
+  color: #aac4d8;
+  font-style: italic;
+}
+
+
+/* ── 액션 버튼 ──────────────────────────────────────────────────────────── */
+#action-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/*
+  주 버튼: Frutiger Aero 광택 버튼
+  - 위→아래 그라데이션
+  - 상단 inset 하이라이트 (유리 광택)
+  - box-shadow (입체감)
+*/
+.btn-primary {
+  padding: 10px 22px;
+  font-family: var(--font-main);
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(180deg, var(--c-btn-top) 0%, var(--c-btn-bot) 100%);
+  border: 1px solid var(--c-btn-bd);
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  box-shadow:
+    0 2px 6px rgba(0,80,160,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.45);   /* 상단 광택 */
+  transition: background 0.15s, box-shadow 0.15s, transform 0.08s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(180deg, var(--c-btn-hover-top) 0%, var(--c-btn-hover-bot) 100%);
+  box-shadow:
+    0 3px 10px rgba(0,80,160,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+.btn-primary:active {
+  background: linear-gradient(180deg, var(--c-btn-press-top) 0%, var(--c-btn-press-bot) 100%);
+  transform: translateY(1px);
+  box-shadow:
+    0 1px 3px rgba(0,80,160,0.3),
+    inset 0 2px 4px rgba(0,0,0,0.15);
+}
+
+/* 보조 버튼 */
+.btn-secondary {
+  padding: 7px 14px;
+  font-family: var(--font-main);
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(180deg, var(--c-btn2-top) 0%, var(--c-btn2-bot) 100%);
+  border: 1px solid rgba(0,100,160,0.4);
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  box-shadow:
+    0 2px 4px rgba(0,80,160,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.5);
+  transition: background 0.15s, box-shadow 0.15s, transform 0.08s;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(180deg, #caeef9 0%, var(--c-btn2-hover) 100%);
+  box-shadow: 0 3px 7px rgba(0,80,160,0.3), inset 0 1px 0 rgba(255,255,255,0.55);
+}
+
+.btn-secondary:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 3px rgba(0,0,0,0.12);
+}
+
+/* 위험(빨강) 버튼 */
+.btn-secondary.btn-danger {
+  background: linear-gradient(180deg, var(--c-danger-top) 0%, var(--c-danger-bot) 100%);
+  border-color: rgba(160,0,0,0.3);
+}
+
+.btn-secondary.btn-danger:hover {
+  background: linear-gradient(180deg, #fac8c8 0%, #c04040 100%);
+}
+
+/* 미니 버튼 (컬럼 필터용) */
+.btn-mini {
+  padding: 4px 10px;
+  font-family: var(--font-main);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(180deg, var(--c-btn2-top) 0%, var(--c-btn2-bot) 100%);
+  border: 1px solid rgba(0,100,160,0.35);
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,80,160,0.2), inset 0 1px 0 rgba(255,255,255,0.45);
+  transition: background 0.15s, transform 0.08s;
+}
+
+.btn-mini:hover { background: linear-gradient(180deg, #caeef9 0%, var(--c-btn2-hover) 100%); }
+.btn-mini:active { transform: translateY(1px); }
+
+/* kbd 태그 스타일 (단축키 표시) */
+kbd {
+  display: inline-block;
+  padding: 2px 7px;
+  font-family: var(--font-main);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-btn-bot);
+  background: rgba(255,255,255,0.6);
+  border: 1px solid rgba(0,100,180,0.35);
+  border-radius: 4px;
+  box-shadow: 0 1px 0 rgba(0,80,160,0.2);
+}
+
+
+/* ── 출력 미리보기 패널 ──────────────────────────────────────────────────── */
+#output-panel { display: flex; flex-direction: column; }
+
+#output-preview {
+  margin-top: 4px;
+  padding: 12px 14px;
+  min-height: 130px;
+  max-height: 280px;
+  overflow: auto;
+  background: rgba(255,255,255,0.82);
+  border: 1px solid var(--c-cell-bd);
+  border-radius: var(--radius-cell);
+  font-family: 'Consolas', 'D2Coding', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--c-text-body);
+  white-space: pre;
+  word-break: break-all;
+}
+
+#output-preview::-webkit-scrollbar { width: 7px; height: 7px; }
+#output-preview::-webkit-scrollbar-track { background: rgba(180,220,245,0.2); }
+#output-preview::-webkit-scrollbar-thumb { background: var(--c-hdr-bg); border-radius: 4px; }
+
+.placeholder { color: #aac4d8; font-style: italic; }
+
+
+/* ── 토스트 알림 ─────────────────────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  padding: 10px 22px;
+  background: rgba(10, 60, 110, 0.88);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  opacity: 0;
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+  z-index: 999;
+  white-space: nowrap;
+}
+
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

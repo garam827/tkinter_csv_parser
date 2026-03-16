@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CSV Prefix Tool</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div id="app">
+
+    <!-- ═══════════════════════════════════════════════════
+         헤더 영역
+    ════════════════════════════════════════════════════ -->
+    <header id="app-header">
+      <h1>CSV Prefix Tool</h1>
+      <span class="subtitle">CSV 데이터에 접두 문자열을 붙여 출력합니다</span>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════
+         출력 구분자 선택
+    ════════════════════════════════════════════════════ -->
+    <section class="panel" id="separator-panel">
+      <span class="panel-title">출력 구분자</span>
+      <div class="radio-group">
+        <label class="radio-label">
+          <input type="radio" name="sep" value="," checked /> 쉼표 &nbsp;( , )
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="sep" value="&#9;" /> 탭 &nbsp;( \t )
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="sep" value=";" /> 세미콜론 &nbsp;( ; )
+        </label>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         CSV 그리드 섹션
+    ════════════════════════════════════════════════════ -->
+    <section class="panel" id="grid-panel">
+
+      <!-- 그리드 컨트롤 버튼 -->
+      <div class="grid-controls">
+        <button class="btn-secondary" onclick="addRow()">행 추가</button>
+        <button class="btn-secondary" onclick="deleteRow()">행 삭제</button>
+        <button class="btn-secondary" onclick="addCol()">열 추가</button>
+        <button class="btn-secondary" onclick="deleteCol()">열 삭제</button>
+        <div class="ctrl-divider"></div>
+        <button class="btn-secondary" onclick="triggerFileLoad()">CSV 불러오기</button>
+        <!-- 실제 file input은 숨겨두고 버튼 클릭 시 trigger -->
+        <input type="file" id="csv-file-input" accept=".csv,.txt" style="display:none" onchange="loadCSVFile(event)" />
+        <button class="btn-secondary btn-danger" onclick="confirmClear()">그리드 초기화</button>
+      </div>
+
+      <!-- 그리드 테이블 (스크롤 가능) -->
+      <div id="grid-wrapper">
+        <table id="csv-grid"></table>
+      </div>
+
+      <!-- 컬럼 필터 -->
+      <div id="col-filter-bar">
+        <span class="filter-label">컬럼 필터</span>
+        <button class="btn-mini" onclick="selectAllCols()">전체 선택</button>
+        <button class="btn-mini" onclick="deselectAllCols()">전체 해제</button>
+        <div id="col-filter-checkboxes"></div>
+      </div>
+
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         접두 문자열 입력
+    ════════════════════════════════════════════════════ -->
+    <section class="panel" id="prefix-panel">
+      <label class="panel-title" for="prefix-text">Prefix Text &nbsp;(접두 문자열)</label>
+      <textarea id="prefix-text" rows="5" placeholder="접두 문자열을 입력하세요... (예: [START]&#10;name: garam&#10;[END])"></textarea>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         액션 버튼
+    ════════════════════════════════════════════════════ -->
+    <div id="action-buttons">
+      <button class="btn-primary" onclick="generateOutput()">
+        출력 생성 &nbsp;<kbd>Ctrl + Enter</kbd>
+      </button>
+      <button class="btn-secondary" onclick="saveToFile()">파일 저장</button>
+      <button class="btn-secondary" onclick="copyToClipboard()">클립보드 복사</button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         출력 미리보기
+    ════════════════════════════════════════════════════ -->
+    <section class="panel" id="output-panel">
+      <span class="panel-title">Output Preview</span>
+      <pre id="output-preview"><span class="placeholder">출력 결과가 여기에 표시됩니다.</span></pre>
+    </section>
+
+  </div><!-- /#app -->
+
+  <!-- 토스트 알림 -->
+  <div id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
