@@ -90,10 +90,16 @@ body {
 }
 
 /* ── 앱 컨테이너: 전체 화면 채우는 flex 세로 레이아웃 ────────────────────── */
+/*
+  min-height 사용 이유:
+  - Sample 패널이 펼쳐지면 콘텐츠가 뷰포트보다 길어질 수 있음
+  - height: 100vh 로 고정하면 넘치는 내용이 잘림
+  - min-height + body overflow-y:auto → 내용이 길면 스크롤, 짧으면 꽉 채움
+*/
 #app {
   width: 100%;
   max-width: none;
-  height: calc(100vh - 24px);   /* 상하 패딩 12px × 2 제외 */
+  min-height: calc(100vh - 24px);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -618,4 +624,239 @@ kbd {
 #toast.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Sample Code 패널 — 변수 치환 테스트
+   ──────────────────────────────────────────────────────────────────────────
+   역할: 파일명·좌표 등 데이터를 변수로 정의하고,
+         접두 문자열의 {{변수명}} 플레이스홀더에 치환 결과를 미리보기
+════════════════════════════════════════════════════════════════════════════ */
+
+/* 패널 자체: flex-shrink:0 으로 세로 공간을 줄이지 않음 */
+#sample-panel {
+  flex-shrink: 0;
+}
+
+/* ── 헤더 바 (클릭으로 접기/펼치기) ───────────────────────────────────────── */
+.sample-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;          /* 클릭 가능 표시 */
+  user-select: none;        /* 더블클릭 시 텍스트 선택 방지 */
+  margin-bottom: 12px;
+}
+
+.sample-panel-header .panel-title {
+  margin-bottom: 0;         /* 헤더 안에서는 아래 여백 제거 */
+}
+
+/* 헤더 오른쪽: 힌트 텍스트 + 접기 버튼 */
+.sample-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* {{변수명}} 사용법 힌트 문구 */
+.sample-hint {
+  font-size: 12px;
+  color: var(--c-text-label);
+  opacity: 0.85;
+}
+
+/* 힌트 안의 <code> 태그: 인라인 코드 강조 */
+.sample-hint code {
+  background: rgba(0, 80, 160, 0.10);
+  border: 1px solid rgba(0, 80, 160, 0.20);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: 'Consolas', 'D2Coding', monospace;
+  font-size: 11px;
+  color: var(--c-btn-bot);
+  font-weight: 700;
+}
+
+/* ── 패널 바디 (접기/펼치기 대상) ─────────────────────────────────────────── */
+#sample-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 컨트롤 버튼 행 */
+.sample-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── 변수 테이블 ─────────────────────────────────────────────────────────── */
+/*
+  CSS Grid 7열 레이아웃:
+  변수명 | 값 | Find 패턴 | Regex☑ | Replace | [▶접두] | [✕]
+*/
+#template-var-table {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tvar-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 160px 52px 140px 60px 30px;
+  gap: 5px;
+  align-items: center;
+}
+
+/* 헤더 행: 열 이름 표시 */
+.tvar-header span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text-label);
+  padding: 2px 4px;
+  opacity: 0.85;
+}
+
+/* 데이터 행: 얇은 구분선으로 시각 구분 */
+.tvar-data-row {
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(144, 202, 249, 0.25);
+}
+
+.tvar-data-row:last-child {
+  border-bottom: none;
+}
+
+/* 변수 입력 필드 공통 */
+.tvar-input {
+  width: 100%;
+  height: 28px;
+  padding: 3px 7px;
+  font-family: var(--font-main);
+  font-size: 12px;
+  color: var(--c-text-body);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--c-cell-bd);
+  border-radius: var(--radius-cell);
+  outline: none;
+  transition: box-shadow 0.12s, background 0.12s;
+}
+
+.tvar-input:focus {
+  background: #fff;
+  box-shadow: 0 0 0 2px var(--c-hdr-bg);
+}
+
+/* 변수명 입력: 모노스페이스 + 파란색 강조 */
+.tvar-input.name-input {
+  font-family: 'Consolas', 'D2Coding', monospace;
+  color: var(--c-btn-bot);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+/* Find 입력: 모노스페이스 (정규식 가독성) */
+.tvar-input.find-input {
+  font-family: 'Consolas', 'D2Coding', monospace;
+  font-size: 11px;
+  color: #7B3F00;           /* 진한 오렌지: 정규식 패턴임을 시각적으로 구분 */
+}
+
+/* Replace 입력 */
+.tvar-input.replace-input {
+  font-family: 'Consolas', 'D2Coding', monospace;
+  font-size: 11px;
+}
+
+/* 정규식 체크박스 + 레이블 */
+.tvar-regex-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.tvar-regex-wrap span {
+  font-size: 9px;
+  color: var(--c-text-label);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.tvar-regex-wrap input[type="checkbox"] {
+  accent-color: var(--c-btn-bot);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+/* 위험(삭제) 미니 버튼 변형 */
+.btn-mini-danger {
+  background: linear-gradient(180deg, #f5b8b8 0%, #d85a5a 100%) !important;
+  border-color: rgba(160, 0, 0, 0.3) !important;
+  color: #fff !important;
+}
+
+.btn-mini-danger:hover {
+  background: linear-gradient(180deg, #fac8c8 0%, #c04040 100%) !important;
+}
+
+/* "▶접두" 삽입 버튼: 조금 더 진한 파랑 */
+.btn-mini-insert {
+  background: linear-gradient(180deg, #78cffa 0%, #1278be 100%) !important;
+  border-color: rgba(0, 80, 160, 0.4) !important;
+}
+
+.btn-mini-insert:hover {
+  background: linear-gradient(180deg, #99dbfc 0%, #1a90d0 100%) !important;
+}
+
+/* ── 변환 미리보기 ───────────────────────────────────────────────────────── */
+.sample-preview-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sample-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sample-preview-header .panel-title {
+  margin-bottom: 0;
+}
+
+/* 변환 결과 표시 영역 */
+#template-preview {
+  padding: 10px 14px;
+  min-height: 56px;
+  max-height: 200px;
+  overflow: auto;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid var(--c-cell-bd);
+  border-radius: var(--radius-cell);
+  font-family: 'Consolas', 'D2Coding', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--c-text-body);
+  white-space: pre-wrap;   /* 줄바꿈 유지하되 가로 넘침 시 줄바꿈 허용 */
+}
+
+#template-preview::-webkit-scrollbar { width: 7px; height: 7px; }
+#template-preview::-webkit-scrollbar-track { background: rgba(180,220,245,0.2); }
+#template-preview::-webkit-scrollbar-thumb { background: var(--c-hdr-bg); border-radius: 4px; }
+
+/* 미치환 플레이스홀더 강조 (아직 변수가 정의되지 않은 {{...}}) */
+.unresolved-var {
+  background: rgba(255, 100, 0, 0.15);
+  border-radius: 2px;
+  color: #B84000;
+  font-weight: 700;
 }

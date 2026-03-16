@@ -292,6 +292,120 @@
 
     </div><!-- /#main-content -->
 
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Sample Code 패널 — 변수 치환 테스트 플레이그라운드
+         ---------------------------------------------------------------
+         역할:
+           - 파일명·좌표 등 데이터를 변수(name, value)로 정의
+           - Find/Replace(정규식 지원) 로 값을 변환
+           - 접두 문자열의 {{변수명}} 자리에 변환된 값을 대입한 미리보기 제공
+           - "→ 접두 적용" 버튼으로 실제 접두 문자열에 결과 반영
+
+         기본 상태: 펼쳐짐 (헤더 클릭 시 접기/펼치기 토글)
+
+         레이아웃 참고:
+           변수명 | 값 | Find 패턴 | Regex☑ | Replace | [▶접두] | [✕]
+    ════════════════════════════════════════════════════════════════════ -->
+    <section class="panel" id="sample-panel">
+
+      <!-- ── 헤더 바: 클릭 시 바디 토글 ──────────────────────────────────── -->
+      <div class="sample-panel-header" onclick="toggleSamplePanel()">
+
+        <!-- 패널 제목 -->
+        <span class="panel-title">🧪 Sample Code — 변수 치환 테스트</span>
+
+        <!-- 오른쪽: 사용법 힌트 + 접기 버튼 -->
+        <div class="sample-header-right">
+          <!--
+            <code> 태그: 인라인 코드 표시 (style.css .sample-hint code)
+            사용법: 접두 문자열에 {{filename}} 형태로 입력 → 변수 값으로 치환됨
+          -->
+          <span class="sample-hint">
+            접두 문자열에서 <code>{{변수명}}</code> 형태로 사용
+          </span>
+          <!-- 버튼 텍스트(▲/▼)는 toggleSamplePanel()이 동적으로 변경 -->
+          <button class="btn-mini" id="sample-toggle-btn" onclick="event.stopPropagation()">▲ 접기</button>
+        </div>
+
+      </div><!-- /.sample-panel-header -->
+
+
+      <!-- ── 바디: 접기/펼치기 대상 영역 ────────────────────────────────── -->
+      <div id="sample-body">
+
+        <!-- ── 컨트롤 버튼 행 ───────────────────────────────────────────── -->
+        <div class="sample-controls">
+
+          <!-- 빈 변수 행 1개 추가 -->
+          <button class="btn-secondary" onclick="addTemplateVar()">+ 변수 추가</button>
+
+          <!-- 샘플 기본값(파일명·좌표 등)으로 초기화 -->
+          <button class="btn-mini" onclick="resetTemplateVars()">샘플 초기화</button>
+
+          <!-- 전체 변수 삭제 -->
+          <button class="btn-mini btn-mini-danger" onclick="clearTemplateVars()">전체 삭제</button>
+
+        </div><!-- /.sample-controls -->
+
+
+        <!-- ── 변수 테이블 ─────────────────────────────────────────────── -->
+        <!--
+          헤더 행 + 데이터 행들로 구성
+          데이터 행은 app.js renderTemplateVars()가 동적으로 추가
+        -->
+        <div id="template-var-table">
+
+          <!-- 열 헤더 -->
+          <div class="tvar-row tvar-header">
+            <span>변수명 ({{...}})</span>
+            <span>원본 값</span>
+            <span>Find 패턴</span>
+            <span>Regex</span>
+            <span>Replace</span>
+            <span></span><!-- 삽입 버튼 열 -->
+            <span></span><!-- 삭제 버튼 열 -->
+          </div>
+
+          <!--
+            데이터 행 컨테이너
+            app.js renderTemplateVars() → 각 변수마다 .tvar-data-row 생성
+          -->
+          <div id="template-var-rows"></div>
+
+        </div><!-- /#template-var-table -->
+
+
+        <!-- ── 변환 미리보기 ────────────────────────────────────────────── -->
+        <div class="sample-preview-wrap">
+
+          <div class="sample-preview-header">
+            <span class="panel-title">변환 미리보기</span>
+
+            <!--
+              접두 문자열 적용 버튼:
+              미리보기 결과(치환 완료 텍스트)를 #prefix-text 에 덮어씀
+              실수 방지를 위해 confirm 대화상자 없이 즉시 적용
+            -->
+            <button class="btn-mini btn-mini-insert" onclick="applyToPrefix()">
+              → 접두 문자열에 적용
+            </button>
+          </div>
+
+          <!--
+            <pre>: 공백·줄바꿈을 그대로 표시
+            초기 안내 문구는 app.js updateTemplatePreview()가 관리
+            미치환 {{변수명}}은 오렌지색으로 강조 (parseAndHighlight 함수)
+          -->
+          <pre id="template-preview"><span class="placeholder">접두 문자열에 {{변수명}}을 입력하면 여기서 치환 결과를 미리볼 수 있습니다.</span></pre>
+
+        </div><!-- /.sample-preview-wrap -->
+
+      </div><!-- /#sample-body -->
+
+    </section><!-- /#sample-panel -->
+
+
   </div><!-- /#app -->
 
 

@@ -874,6 +874,411 @@ document.addEventListener('keydown', e => {
 
 
 // ════════════════════════════════════════════════════════════════════════════
+//  Sample Code — 변수 치환 테스트 플레이그라운드
+// ════════════════════════════════════════════════════════════════════════════
+/*
+  개념:
+    1. templateVars 배열에 변수 목록 저장
+    2. 각 변수는 { name, value, find, replace, useRegex } 구조
+    3. 접두 문자열의 {{name}} → applyVarTransform(v) 결과로 치환
+    4. 미리보기에서 실시간 확인 → "접두 문자열에 적용" 버튼으로 반영
+
+  변환 흐름:
+    원본 값 (value)
+      → Find/Replace 적용 (문자열 치환 또는 정규식 치환)
+      → 변환된 값
+      → 접두 문자열의 {{name}} 자리에 삽입
+      → 미리보기 출력
+*/
+
+// ── 상태: 변수 목록 ─────────────────────────────────────────────────────────
+
+/**
+ * 템플릿 변수 배열
+ * 각 항목의 구조:
+ *   name      {string} 변수 이름 — 접두 문자열에서 {{name}} 으로 참조
+ *   value     {string} 원본 값  — Find/Replace 변환 전 값
+ *   find      {string} 검색 패턴 — useRegex=true면 정규식, false면 일반 문자열
+ *   replace   {string} 치환 문자열 — 정규식 그룹 참조 $1, $2 등 사용 가능
+ *   useRegex  {boolean} 정규식 모드 여부
+ */
+let templateVars = [];
+
+/**
+ * 샘플 초기값 목록 — 파일명·좌표 등 실제 사용 예시
+ *
+ * 사용 방법 (접두 문자열 예시):
+ *   file: {{filename}}
+ *   coord: ({{x_coord}}, {{y_coord}})
+ *   label: {{label}}
+ *
+ * 변환 예시:
+ *   filename : "image_001.jpg" → 정규식 \.jpg$ → .png → "image_001.png"
+ *   x_coord  : "37.123456789" → 정규식 소수점 4자리만 → "37.1234"
+ *   y_coord  : "127.987654321" → 정규식 소수점 4자리만 → "127.9876"
+ *   label    : "car_001"      → 변환 없이 그대로 사용
+ */
+const SAMPLE_VARS = [
+  {
+    name: 'filename',
+    value: 'image_001.jpg',
+    find: '\\.jpg$',        // 정규식: 문자열 끝의 .jpg
+    replace: '.png',        // .png 로 바꿈
+    useRegex: true,
+  },
+  {
+    name: 'x_coord',
+    value: '37.123456789',
+    find: '(\\d+\\.\\d{4})\\d+',  // 소수점 이하 4자리까지만 남기기
+    replace: '$1',                 // 첫 번째 그룹($1)만 사용
+    useRegex: true,
+  },
+  {
+    name: 'y_coord',
+    value: '127.987654321',
+    find: '(\\d+\\.\\d{4})\\d+',
+    replace: '$1',
+    useRegex: true,
+  },
+  {
+    name: 'label',
+    value: 'car_001',
+    find: '',     // 변환 없음
+    replace: '',
+    useRegex: false,
+  },
+];
+
+
+// ── 초기화 ──────────────────────────────────────────────────────────────────
+
+/**
+ * SAMPLE_VARS 를 깊은 복사해 templateVars 를 초기화하고 UI를 다시 그린다.
+ * spread 문법 {...v} 로 각 객체를 복사 → 원본 SAMPLE_VARS 가 변경되지 않도록 보호
+ */
+function initTemplateVars() {
+  templateVars = SAMPLE_VARS.map(v => ({ ...v }));  // 깊은 복사
+  renderTemplateVars();
+}
+
+/** 빈 변수 1개를 templateVars 에 추가하고 UI를 다시 그린다. */
+function addTemplateVar() {
+  templateVars.push({
+    name: `var${templateVars.length + 1}`,
+    value: '',
+    find: '',
+    replace: '',
+    useRegex: false,
+  });
+  renderTemplateVars();
+}
+
+/**
+ * 지정 인덱스의 변수를 삭제하고 UI를 다시 그린다.
+ * Array.splice(시작인덱스, 삭제개수): 배열을 직접 수정
+ * @param {number} idx - 삭제할 변수의 인덱스
+ */
+function removeTemplateVar(idx) {
+  templateVars.splice(idx, 1);
+  renderTemplateVars();
+}
+
+/** 샘플 기본값으로 초기화 (confirm 없이 즉시 실행) */
+function resetTemplateVars() {
+  initTemplateVars();
+  showToast('✅ 샘플 변수로 초기화했습니다.');
+}
+
+/** 모든 변수 삭제 */
+function clearTemplateVars() {
+  if (!confirm('모든 변수를 삭제하시겠습니까?')) return;
+  templateVars = [];
+  renderTemplateVars();
+}
+
+
+// ── 변환 로직 ───────────────────────────────────────────────────────────────
+
+/**
+ * 변수 1개에 Find/Replace 변환을 적용하고 결과 문자열을 반환한다.
+ *
+ * useRegex = false (일반 문자열 치환):
+ *   String.split(find).join(replace) 패턴 사용
+ *   → replaceAll 과 동일하지만 구형 브라우저 호환성 확보
+ *
+ * useRegex = true (정규식 치환):
+ *   new RegExp(find, 'g') 로 글로벌 정규식 생성
+ *   String.replace(regex, replace) 실행
+ *   → replace 안에 $1, $2 등 캡처 그룹 참조 사용 가능
+ *
+ * 정규식 오류 처리:
+ *   잘못된 패턴(예: "[unclosed") 이면 SyntaxError 발생
+ *   catch 로 잡아 원본 값 + "⚠️ 오류" 문자열 반환 (앱 중단 방지)
+ *
+ * @param {{ name, value, find, replace, useRegex }} v - 변수 객체
+ * @returns {string} 변환 결과 문자열
+ */
+function applyVarTransform(v) {
+  let val = v.value;
+
+  // find 패턴이 없으면 변환 없이 원본 반환
+  if (!v.find) return val;
+
+  try {
+    if (v.useRegex) {
+      // 정규식 모드: 'g' 플래그 = 전체 치환 (없으면 첫 번째만 치환)
+      const regex = new RegExp(v.find, 'g');
+      val = val.replace(regex, v.replace);
+    } else {
+      // 일반 문자열 모드: 모든 출현 치환
+      val = val.split(v.find).join(v.replace);
+    }
+  } catch (e) {
+    // 잘못된 정규식 패턴 → 오류 표시 (앱 동작은 계속)
+    return val + ' ⚠️ 정규식 오류';
+  }
+
+  return val;
+}
+
+/**
+ * 주어진 텍스트에서 {{변수명}} 을 모두 변환된 값으로 치환한다.
+ *
+ * 동작:
+ *   templateVars 를 순서대로 순회하며
+ *   text 안의 {{v.name}} 을 applyVarTransform(v) 결과로 교체
+ *
+ * 주의: 변수 이름이 빈 문자열이면 건너뜀 ({{}} 치환 방지)
+ *
+ * @param {string} text - 치환할 원본 텍스트 (접두 문자열 등)
+ * @returns {string} 치환 완료 텍스트
+ */
+function applyTemplateToText(text) {
+  let result = text;
+
+  templateVars.forEach(v => {
+    if (!v.name.trim()) return;  // 이름 없는 변수는 건너뜀
+
+    const transformed = applyVarTransform(v);
+    // split+join 패턴 = replaceAll 과 동일 (전체 치환)
+    result = result.split(`{{${v.name}}}`).join(transformed);
+  });
+
+  return result;
+}
+
+
+// ── 미리보기 갱신 ───────────────────────────────────────────────────────────
+
+/**
+ * 접두 문자열에 변수 치환을 적용한 결과를 미리보기에 표시한다.
+ * 미치환 {{변수명}} (정의되지 않은 변수) 은 innerHTML 로 오렌지 강조 처리.
+ *
+ * 이 함수는 다음 상황에서 자동 호출된다:
+ *   - 접두 문자열 textarea 에 입력 시 (input 이벤트)
+ *   - renderTemplateVars() 호출 후 (변수 목록 변경 시)
+ *   - 변수 입력 필드 값 변경 시
+ */
+function updateTemplatePreview() {
+  const prefix  = document.getElementById('prefix-text').value;
+  const preview = document.getElementById('template-preview');
+
+  if (!prefix.trim()) {
+    // 접두 문자열이 비어있으면 안내 문구 표시
+    preview.innerHTML = '<span class="placeholder">접두 문자열에 {{변수명}}을 입력하면 여기서 치환 결과를 미리볼 수 있습니다.</span>';
+    return;
+  }
+
+  // 1단계: 정의된 변수 치환
+  const substituted = applyTemplateToText(prefix);
+
+  // 2단계: 미치환 {{...}} 강조 (정의되지 않은 변수 이름)
+  //   textContent 대신 innerHTML 사용 + HTML 이스케이프 필요
+  const escaped = substituted
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // 남아있는 {{...}} 를 오렌지 <span> 으로 감쌈
+  const highlighted = escaped.replace(
+    /\{\{([^}]+)\}\}/g,
+    '<span class="unresolved-var">{{$1}}</span>'
+  );
+
+  preview.innerHTML = highlighted;
+}
+
+/**
+ * 미리보기 결과(치환 완료 텍스트)를 실제 접두 문자열 textarea 에 덮어쓴다.
+ * 이후 generateOutput() 호출 시 변환된 값이 출력에 반영된다.
+ */
+function applyToPrefix() {
+  const prefix = document.getElementById('prefix-text').value;
+  if (!prefix.trim()) {
+    showToast('⚠️ 접두 문자열이 비어있습니다.');
+    return;
+  }
+
+  const result = applyTemplateToText(prefix);
+  document.getElementById('prefix-text').value = result;
+  updateTemplatePreview();
+  showToast('✅ 치환 결과가 접두 문자열에 적용되었습니다.');
+}
+
+/**
+ * 접두 문자열 textarea 의 현재 커서 위치에 {{변수명}} 을 삽입한다.
+ *
+ * 커서 위치 처리:
+ *   selectionStart  : 현재 커서(또는 선택 시작) 위치
+ *   selectionEnd    : 선택 끝 위치 (커서만 있을 때는 selectionStart 와 동일)
+ *   선택 영역이 있으면 그 영역을 {{name}} 으로 대체
+ *
+ * @param {string} name - 삽입할 변수 이름
+ */
+function insertVarIntoPrefix(name) {
+  const ta  = document.getElementById('prefix-text');
+  const pos = ta.selectionStart;                    // 커서 위치
+  const end = ta.selectionEnd;
+  const placeholder = `{{${name}}}`;
+
+  // 커서 앞부분 + 플레이스홀더 + 커서 뒷부분
+  ta.value = ta.value.substring(0, pos) + placeholder + ta.value.substring(end);
+
+  // 삽입 후 커서를 플레이스홀더 끝으로 이동
+  const newPos = pos + placeholder.length;
+  ta.setSelectionRange(newPos, newPos);
+  ta.focus();
+
+  updateTemplatePreview();
+  showToast(`✅ {{${name}}} 을 접두 문자열에 삽입했습니다.`);
+}
+
+
+// ── UI 렌더링 ────────────────────────────────────────────────────────────────
+
+/**
+ * templateVars 배열을 기반으로 변수 테이블 행들을 다시 그린다.
+ * 변수 추가/삭제/초기화 시 항상 이 함수를 호출한다.
+ *
+ * 각 행 구조 (CSS Grid 7열):
+ *   [변수명 input] [값 input] [Find input] [Regex☑] [Replace input] [▶접두] [✕]
+ */
+function renderTemplateVars() {
+  const container = document.getElementById('template-var-rows');
+  container.innerHTML = '';  // 기존 행 전부 제거
+
+  templateVars.forEach((v, idx) => {
+    const row = document.createElement('div');
+    row.className = 'tvar-row tvar-data-row';
+
+    // ① 변수명 input (모노스페이스, 파란색)
+    const nameInput = makeTvarInput(v.name, 'name-input', '변수명', val => {
+      templateVars[idx].name = val;
+      // 버튼 tooltip 업데이트
+      insertBtn.title = `접두 문자열에 {{${val}}} 삽입`;
+      updateTemplatePreview();
+    });
+
+    // ② 원본 값 input
+    const valueInput = makeTvarInput(v.value, '', '원본 값', val => {
+      templateVars[idx].value = val;
+      updateTemplatePreview();
+    });
+
+    // ③ Find 패턴 input (모노스페이스, 오렌지색)
+    const findInput = makeTvarInput(v.find, 'find-input', '패턴 (문자열 or 정규식)', val => {
+      templateVars[idx].find = val;
+      updateTemplatePreview();
+    });
+
+    // ④ Regex 체크박스 (정규식 모드 토글)
+    const regexWrap = document.createElement('div');
+    regexWrap.className = 'tvar-regex-wrap';
+
+    const regexCb = document.createElement('input');
+    regexCb.type    = 'checkbox';
+    regexCb.checked = v.useRegex;
+    regexCb.title   = '정규식 모드로 Find/Replace 실행';
+    regexCb.addEventListener('change', () => {
+      templateVars[idx].useRegex = regexCb.checked;
+      updateTemplatePreview();
+    });
+
+    const regexLabel = document.createElement('span');
+    regexLabel.textContent = 'Regex';
+
+    regexWrap.append(regexCb, regexLabel);
+
+    // ⑤ Replace input
+    const replaceInput = makeTvarInput(v.replace, 'replace-input', '치환 값 ($1, $2 사용 가능)', val => {
+      templateVars[idx].replace = val;
+      updateTemplatePreview();
+    });
+
+    // ⑥ ▶접두 삽입 버튼: 접두 textarea 커서 위치에 {{name}} 삽입
+    const insertBtn = document.createElement('button');
+    insertBtn.className = 'btn-mini btn-mini-insert';
+    insertBtn.textContent = '▶접두';
+    insertBtn.title = `접두 문자열에 {{${v.name}}} 삽입`;
+    insertBtn.addEventListener('click', () => insertVarIntoPrefix(templateVars[idx].name));
+
+    // ⑦ ✕ 삭제 버튼
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn-mini btn-mini-danger';
+    delBtn.textContent = '✕';
+    delBtn.title = '이 변수 삭제';
+    delBtn.addEventListener('click', () => removeTemplateVar(idx));
+
+    row.append(nameInput, valueInput, findInput, regexWrap, replaceInput, insertBtn, delBtn);
+    container.appendChild(row);
+  });
+
+  // 변수 목록 변경 후 미리보기 갱신
+  updateTemplatePreview();
+}
+
+/**
+ * 변수 테이블용 <input> 요소를 생성하는 헬퍼 함수.
+ * 반복되는 input 생성 코드를 한 곳에서 관리.
+ *
+ * @param {string} value - 초기 값
+ * @param {string} extraClass - 추가할 CSS 클래스 (예: 'name-input', 'find-input')
+ * @param {string} placeholder - 플레이스홀더 텍스트
+ * @param {function} onInput - 값 변경 시 호출할 콜백 (새 값을 인자로 받음)
+ * @returns {HTMLInputElement}
+ */
+function makeTvarInput(value, extraClass, placeholder, onInput) {
+  const input = document.createElement('input');
+  input.type        = 'text';
+  input.className   = `tvar-input${extraClass ? ' ' + extraClass : ''}`;
+  input.value       = value;
+  input.placeholder = placeholder;
+  input.addEventListener('input', () => onInput(input.value));
+  return input;
+}
+
+
+// ── 패널 접기/펼치기 ─────────────────────────────────────────────────────────
+
+/**
+ * Sample Code 패널의 바디를 토글한다.
+ * 버튼 텍스트를 ▲/▼ 로 전환해 현재 상태를 시각적으로 표시.
+ *
+ * display 속성 제어:
+ *   'flex'  → 현재 열려있음 → 닫기 (none)
+ *   기타    → 현재 닫혀있음 → 열기 (flex)
+ */
+function toggleSamplePanel() {
+  const body    = document.getElementById('sample-body');
+  const btn     = document.getElementById('sample-toggle-btn');
+  const isOpen  = body.style.display !== 'none';
+
+  body.style.display = isOpen ? 'none' : 'flex';
+  btn.textContent    = isOpen ? '▼ 펼치기' : '▲ 접기';
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
 //  초기화 — 페이지 로드 시 실행
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -886,5 +1291,10 @@ document.addEventListener('keydown', e => {
  *   이 시점에서 buildGrid()를 호출해 초기 10×6 그리드를 채운다.
  */
 document.addEventListener('DOMContentLoaded', () => {
-  buildGrid();  // 기본 10행 × 6열 빈 그리드 생성
+  buildGrid();           // 기본 10행 × 6열 빈 그리드 생성
+  initTemplateVars();    // 샘플 변수 목록 초기화 (파일명·좌표 예시)
+
+  // 접두 문자열 변경 시 미리보기 자동 갱신
+  // 'input' 이벤트: 키 입력, 붙여넣기, 잘라내기 등 모든 값 변경에 반응
+  document.getElementById('prefix-text').addEventListener('input', updateTemplatePreview);
 });
