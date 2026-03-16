@@ -1,102 +1,292 @@
 <!DOCTYPE html>
+<!--
+  ╔══════════════════════════════════════════════════════════════════════════╗
+  ║  CSV Prefix Tool — index.html                                           ║
+  ║                                                                          ║
+  ║  역할: 앱의 뼈대(구조)를 정의하는 HTML 파일                              ║
+  ║        실제 동작 로직은 app.js, 시각 스타일은 style.css 에 있음           ║
+  ║                                                                          ║
+  ║  전체 레이아웃 (데스크톱 2컬럼):                                          ║
+  ║  ┌─────────────────────── #app ────────────────────────────────┐         ║
+  ║  │  #app-header   (헤더: 제목 + 부제)                          │         ║
+  ║  │  ┌──────── #main-content (CSS Grid 1:1) ──────────────┐    │         ║
+  ║  │  │  #left-col           │  #right-col                 │    │         ║
+  ║  │  │  └─ #grid-panel      │  ├─ #separator-panel        │    │         ║
+  ║  │  │     ├─ 컨트롤 버튼   │  ├─ #prefix-panel           │    │         ║
+  ║  │  │     ├─ #grid-wrapper │  ├─ #action-buttons         │    │         ║
+  ║  │  │     └─ #col-filter   │  └─ #output-panel           │    │         ║
+  ║  │  └────────────────────────────────────────────────────┘    │         ║
+  ║  └─────────────────────────────────────────────────────────────┘         ║
+  ╚══════════════════════════════════════════════════════════════════════════╝
+-->
 <html lang="ko">
 <head>
+  <!-- ── 문서 기본 설정 ──────────────────────────────────────────────────── -->
+
+  <!-- 문자 인코딩: UTF-8 → 한글, 특수문자 깨짐 방지 -->
   <meta charset="UTF-8" />
+
+  <!--
+    viewport 설정:
+    - width=device-width  : 화면 너비를 기기 실제 픽셀에 맞춤
+    - initial-scale=1.0   : 첫 로드 시 줌 배율 1배 (100%)
+    모바일 브라우저가 화면을 임의로 축소하는 것을 방지
+  -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- 브라우저 탭에 표시되는 제목 -->
   <title>CSV Prefix Tool</title>
+
+  <!--
+    외부 CSS 파일 연결
+    - href="style.css" : 같은 폴더의 style.css 파일
+    - rel="stylesheet" : CSS 스타일시트임을 브라우저에 알림
+  -->
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
 
+<body>
+<!--
+  body: 화면에 보이는 모든 요소의 최상위 컨테이너
+  배경 그라데이션(하늘색)은 style.css body 규칙에서 지정
+-->
+
+  <!--
+    ═══════════════════════════════════════════════════════════════════════
+    #app — 전체 앱 컨테이너
+    -----------------------------------------------------------------------
+    - style.css 에서 flex 세로 레이아웃으로 정의
+    - 내부는 헤더 + main-content 두 영역으로 나뉨
+    ═══════════════════════════════════════════════════════════════════════
+  -->
   <div id="app">
 
-    <!-- ═══════════════════════════════════════════════════
-         헤더 영역
-    ════════════════════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════════════════════════════
+         헤더 — 제목과 부제목
+         style.css #app-header 규칙: flex row, 하단 구분선
+    ════════════════════════════════════════════════════════════════════ -->
     <header id="app-header">
+      <!-- 앱 이름: 큰 제목 -->
       <h1>CSV Prefix Tool</h1>
+
+      <!-- 부제목: 앱이 하는 일을 한 줄로 설명 -->
       <span class="subtitle">CSV 데이터에 접두 문자열을 붙여 출력합니다</span>
     </header>
 
-    <!-- ═══════════════════════════════════════════════════
-         메인 2컬럼 레이아웃
-         좌: 그리드 패널 / 우: 구분자·접두·액션·출력
-    ════════════════════════════════════════════════════ -->
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         #main-content — 데스크톱 2컬럼 레이아웃 (CSS Grid 1:1)
+         ---------------------------------------------------------------
+         style.css: grid-template-columns: minmax(0,1fr) minmax(0,1fr)
+         → 왼쪽(그리드)과 오른쪽(나머지)이 화면을 정확히 50:50으로 분할
+    ════════════════════════════════════════════════════════════════════ -->
     <div id="main-content">
 
-      <!-- ── 왼쪽 컬럼: CSV 그리드 ── -->
+
+      <!-- ┌──────────────────────────────────────────────────────────────
+           │ 왼쪽 컬럼 (#left-col) — CSV 그리드 패널
+           └────────────────────────────────────────────────────────── -->
       <div id="left-col">
 
+        <!--
+          .panel #grid-panel: 유리(glass) 효과 패널
+          style.css .panel: backdrop-filter:blur + 반투명 배경
+        -->
         <section class="panel" id="grid-panel">
 
-          <!-- 그리드 컨트롤 버튼 -->
+          <!-- ── 그리드 컨트롤 버튼 행 ─────────────────────────────────
+               각 버튼은 onclick 속성으로 app.js 의 함수를 직접 호출
+               예) onclick="addRow()" → app.js 의 addRow() 실행
+          ──────────────────────────────────────────────────────────── -->
           <div class="grid-controls">
+
+            <!-- 행/열 조작 버튼 (보조 버튼 스타일) -->
             <button class="btn-secondary" onclick="addRow()">행 추가</button>
             <button class="btn-secondary" onclick="deleteRow()">행 삭제</button>
             <button class="btn-secondary" onclick="addCol()">열 추가</button>
             <button class="btn-secondary" onclick="deleteCol()">열 삭제</button>
-            <div class="ctrl-divider"></div>
-            <button class="btn-secondary" onclick="triggerFileLoad()">CSV 불러오기</button>
-            <input type="file" id="csv-file-input" accept=".csv,.txt" style="display:none" onchange="loadCSVFile(event)" />
-            <button class="btn-secondary btn-danger" onclick="confirmClear()">그리드 초기화</button>
-          </div>
 
-          <!-- 그리드 테이블 (스크롤 가능) -->
+            <!-- 버튼 그룹 사이 세로 구분선 (시각적 분리) -->
+            <div class="ctrl-divider"></div>
+
+            <!--
+              CSV 불러오기:
+              실제 파일 선택은 숨겨진 <input type="file">이 담당
+              버튼 클릭 → triggerFileLoad() → file input의 .click() 호출
+            -->
+            <button class="btn-secondary" onclick="triggerFileLoad()">CSV 불러오기</button>
+
+            <!--
+              숨겨진 파일 선택 입력창
+              - display:none → 화면에 보이지 않음
+              - accept=".csv,.txt" → CSV/텍스트 파일만 선택 가능
+              - onchange → 파일 선택 완료 시 loadCSVFile() 호출
+            -->
+            <input
+              type="file"
+              id="csv-file-input"
+              accept=".csv,.txt"
+              style="display:none"
+              onchange="loadCSVFile(event)"
+            />
+
+            <!-- 그리드 초기화: 위험 동작이므로 btn-danger 로 빨간색 강조 -->
+            <button class="btn-secondary btn-danger" onclick="confirmClear()">그리드 초기화</button>
+
+          </div><!-- /.grid-controls -->
+
+
+          <!-- ── CSV 그리드 테이블 ────────────────────────────────────
+               #grid-wrapper: 가로·세로 스크롤 컨테이너
+               내부 <table id="csv-grid">는 app.js buildGrid()가 동적으로 채움
+               초기 상태: 10행 × 6열 (ROWS=10, COLS=6)
+          ──────────────────────────────────────────────────────────── -->
           <div id="grid-wrapper">
+            <!--
+              <table>은 비어있는 상태로 시작
+              DOMContentLoaded 이벤트 → buildGrid() 호출 → th + td + input 생성
+            -->
             <table id="csv-grid"></table>
           </div>
 
-          <!-- 컬럼 필터 -->
+
+          <!-- ── 컬럼 필터 바 ──────────────────────────────────────────
+               각 열의 포함 여부를 체크박스(pill 형태)로 선택
+               열이 추가/삭제될 때마다 refreshColFilter()가 다시 그림
+          ──────────────────────────────────────────────────────────── -->
           <div id="col-filter-bar">
+
+            <!-- 레이블 텍스트 -->
             <span class="filter-label">컬럼 필터</span>
+
+            <!-- 전체 선택/해제 미니 버튼 -->
             <button class="btn-mini" onclick="selectAllCols()">전체 선택</button>
             <button class="btn-mini" onclick="deselectAllCols()">전체 해제</button>
-            <div id="col-filter-checkboxes"></div>
-          </div>
 
-        </section>
+            <!--
+              체크박스 컨테이너: app.js refreshColFilter()가
+              현재 열 수만큼 .col-checkbox-label 요소를 동적으로 추가
+            -->
+            <div id="col-filter-checkboxes"></div>
+
+          </div><!-- /#col-filter-bar -->
+
+        </section><!-- /#grid-panel -->
 
       </div><!-- /#left-col -->
 
-      <!-- ── 오른쪽 컬럼: 구분자 · 접두사 · 액션 · 출력 ── -->
+
+      <!-- ┌──────────────────────────────────────────────────────────────
+           │ 오른쪽 컬럼 (#right-col)
+           │  1) 출력 구분자 선택
+           │  2) 접두 문자열 입력
+           │  3) 액션 버튼
+           │  4) 출력 미리보기
+           └────────────────────────────────────────────────────────── -->
       <div id="right-col">
 
-        <!-- 출력 구분자 선택 -->
+
+        <!-- ── 1) 출력 구분자 선택 ──────────────────────────────────────
+             라디오 버튼: 같은 name="sep" → 3개 중 1개만 선택 가능
+             선택된 값은 getSelectedSep()이 읽어 CSV 생성에 사용
+        ──────────────────────────────────────────────────────────────── -->
         <section class="panel" id="separator-panel">
+
           <span class="panel-title">출력 구분자</span>
+
           <div class="radio-group">
-            <label class="radio-label">
-              <input type="radio" name="sep" value="," checked /> 쉼표 &nbsp;( , )
-            </label>
-            <label class="radio-label">
-              <input type="radio" name="sep" value="&#9;" /> 탭 &nbsp;( \t )
-            </label>
-            <label class="radio-label">
-              <input type="radio" name="sep" value=";" /> 세미콜론 &nbsp;( ; )
-            </label>
-          </div>
-        </section>
 
-        <!-- 접두 문자열 입력 -->
+            <!-- 쉼표 구분자 (기본 선택: checked 속성) -->
+            <label class="radio-label">
+              <input type="radio" name="sep" value="," checked />
+              쉼표 &nbsp;( , )
+            </label>
+
+            <!--
+              탭 구분자
+              value="&#9;" → 탭 문자(\t)의 HTML 엔티티 코드
+              실제 value 는 '\t' (탭 1개)
+            -->
+            <label class="radio-label">
+              <input type="radio" name="sep" value="&#9;" />
+              탭 &nbsp;( \t )
+            </label>
+
+            <!-- 세미콜론 구분자 (유럽 CSV 형식에서 주로 사용) -->
+            <label class="radio-label">
+              <input type="radio" name="sep" value=";" />
+              세미콜론 &nbsp;( ; )
+            </label>
+
+          </div><!-- /.radio-group -->
+
+        </section><!-- /#separator-panel -->
+
+
+        <!-- ── 2) 접두 문자열 입력 ─────────────────────────────────────
+             <textarea>: 여러 줄 텍스트 입력
+             입력된 내용은 generateOutput()에서 prefix로 사용
+        ──────────────────────────────────────────────────────────────── -->
         <section class="panel" id="prefix-panel">
-          <label class="panel-title" for="prefix-text">Prefix Text &nbsp;(접두 문자열)</label>
-          <textarea id="prefix-text" placeholder="접두 문자열을 입력하세요... (예: [START]&#10;name: garam&#10;[END])"></textarea>
-        </section>
 
-        <!-- 액션 버튼 -->
+          <!--
+            <label for="prefix-text">: 이 label을 클릭하면
+            id="prefix-text" 인 textarea에 포커스가 이동 (접근성 향상)
+          -->
+          <label class="panel-title" for="prefix-text">
+            Prefix Text &nbsp;(접두 문자열)
+          </label>
+
+          <!--
+            placeholder: 입력값이 없을 때 회색으로 보이는 안내 텍스트
+            &#10; → 줄바꿈 문자(LF). placeholder 안에서 줄바꿈에 사용
+          -->
+          <textarea
+            id="prefix-text"
+            placeholder="접두 문자열을 입력하세요... (예: [START]&#10;name: garam&#10;[END])"
+          ></textarea>
+
+        </section><!-- /#prefix-panel -->
+
+
+        <!-- ── 3) 액션 버튼 ────────────────────────────────────────────
+             출력 생성 / 파일 저장 / 클립보드 복사 세 가지 주요 동작
+        ──────────────────────────────────────────────────────────────── -->
         <div id="action-buttons">
+
+          <!--
+            주 버튼 (.btn-primary): 가장 중요한 동작 → 눈에 띄는 파란 그라데이션
+            <kbd>: 키보드 단축키를 나타내는 HTML 태그 (시각적 강조)
+          -->
           <button class="btn-primary" onclick="generateOutput()">
             출력 생성 &nbsp;<kbd>Ctrl + Enter</kbd>
           </button>
-          <button class="btn-secondary" onclick="saveToFile()">파일 저장</button>
-          <button class="btn-secondary" onclick="copyToClipboard()">클립보드 복사</button>
-        </div>
 
-        <!-- 출력 미리보기 -->
+          <!-- 파일 저장: lastOutput을 output.csv로 다운로드 -->
+          <button class="btn-secondary" onclick="saveToFile()">파일 저장</button>
+
+          <!-- 클립보드 복사: navigator.clipboard API 사용 -->
+          <button class="btn-secondary" onclick="copyToClipboard()">클립보드 복사</button>
+
+        </div><!-- /#action-buttons -->
+
+
+        <!-- ── 4) 출력 미리보기 ─────────────────────────────────────────
+             generateOutput() 결과를 읽기 전용으로 표시
+             <pre>: 공백·줄바꿈을 있는 그대로 보여주는 태그 (preformatted)
+        ──────────────────────────────────────────────────────────────── -->
         <section class="panel" id="output-panel">
+
           <span class="panel-title">Output Preview</span>
+
+          <!--
+            <pre> 안의 내용은 app.js updatePreview()가 교체
+            초기값: .placeholder 스타일의 안내 문구
+          -->
           <pre id="output-preview"><span class="placeholder">출력 결과가 여기에 표시됩니다.</span></pre>
-        </section>
+
+        </section><!-- /#output-panel -->
+
 
       </div><!-- /#right-col -->
 
@@ -104,9 +294,26 @@
 
   </div><!-- /#app -->
 
-  <!-- 토스트 알림 -->
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       토스트 알림 (#toast)
+       ──────────────────────────────────────────────────────────────────
+       - 화면 하단 중앙에 잠깐 나타나는 알림 메시지
+       - 기본 상태: opacity:0, display:none (보이지 않음)
+       - app.js showToast() 호출 시 .show 클래스 추가 → 페이드인
+       - 2.2초 후 자동으로 .show 제거 → 페이드아웃
+  ════════════════════════════════════════════════════════════════════ -->
   <div id="toast"></div>
 
+
+  <!--
+    JavaScript 파일 로드 (</body> 직전에 배치)
+    ──────────────────────────────────────────
+    HTML 파싱이 완료된 후 JS가 실행되도록 body 맨 아래에 배치.
+    app.js 안의 DOMContentLoaded 리스너가 buildGrid()를 호출해
+    첫 그리드를 초기화한다.
+  -->
   <script src="app.js"></script>
+
 </body>
 </html>

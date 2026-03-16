@@ -101,14 +101,16 @@ body {
 
 /* ── 메인 2컬럼 레이아웃 ─────────────────────────────────────────────────── */
 /*
-  데스크톱 레이아웃:
-  - 왼쪽 (left-col): CSV 그리드 — 화면의 ~62% 사용
-  - 오른쪽 (right-col): 구분자·접두사·액션·출력 — 화면의 ~38% 사용
-  - flex: 1 로 남은 세로 공간 모두 차지
+  데스크톱 2컬럼 레이아웃:
+  - 왼쪽 (left-col) : CSV 그리드     — 최대 50% (데이터가 아무리 많아도 절반 초과 불가)
+  - 오른쪽 (right-col): 나머지 패널들 — 나머지 50%
+  - minmax(0, 1fr): 최솟값 0, 최댓값 1fr → 각 컬럼이 50%씩 균등 분배
+    (단순 1fr 1fr 과 같지만 min-width:0 효과로 overflow 없이 줄어듦)
+  - flex: 1 → 헤더를 제외한 남은 세로 공간 전부 사용
 */
 #main-content {
   display: grid;
-  grid-template-columns: 62fr 38fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
   flex: 1;           /* 헤더를 제외한 남은 높이 전체 사용 */
   min-height: 0;     /* grid child 가 overflow 없이 줄어들 수 있도록 */
