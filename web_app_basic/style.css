@@ -1,0 +1,755 @@
+/* =============================================================================
+   style.css — Frutiger Aero 디자인 테마  (기본 버전 · Sample Code 없음)
+   =============================================================================
+
+   Frutiger Aero (2004~2013) 디자인 언어 핵심 요소:
+   ┌─────────────────────────────────────────────────────────────────┐
+   │ 1. 하늘색 그라데이션 배경   → 맑은 하늘, 자연의 청량함          │
+   │ 2. 유리 패널 효과           → backdrop-filter:blur + 반투명     │
+   │ 3. 광택 버튼                → 그라데이션 + inset highlight      │
+   │ 4. 부드러운 곡선            → border-radius 곳곳에 적용          │
+   │ 5. 자연광 느낌              → 밝고 투명한 색조                   │
+   └─────────────────────────────────────────────────────────────────┘
+
+   파일 구조:
+     1. CSS 변수 (색상 팔레트)
+     2. 전역 리셋 & body
+     3. 앱 컨테이너 & 2컬럼 레이아웃
+     4. 헤더
+     5. 유리 패널 (.panel)
+     6. 구분자 패널
+     7. 그리드 패널 (테이블, 스크롤, 헤더, 셀)
+     8. 컬럼 필터 바
+     9. 접두 문자열 패널
+    10. 버튼 스타일 (primary / secondary / danger / mini / kbd)
+    11. 출력 미리보기 패널
+    12. 토스트 알림
+============================================================================= */
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1. CSS 변수 (색상 팔레트)
+   ─────────────────────────────────────────────────────────────────────────
+   :root 에 선언하면 페이지 전체에서 var(--이름) 으로 참조 가능
+   색상 하나를 바꾸면 해당 변수를 사용하는 모든 곳에 자동 반영
+═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* ── 배경 그라데이션 ── */
+  --c-sky-top:    #7ECEF4;   /* 화면 상단: 선명한 하늘색 */
+  --c-sky-bot:    #DDF1FF;   /* 화면 하단: 구름빛 연한 파랑 */
+
+  /* ── 유리 패널 ── */
+  --c-glass:      rgba(255, 255, 255, 0.55);   /* 반투명 흰색 배경 */
+  --c-glass-bd:   rgba(255, 255, 255, 0.85);   /* 반투명 흰 테두리 */
+  --c-panel-bg:   rgba(230, 246, 255, 0.70);   /* 패널 배경 대안색 */
+
+  /* ── 그리드 ── */
+  --c-hdr-bg:     #3BAADE;   /* 열·행 헤더 배경색 */
+  --c-hdr-text:   #ffffff;   /* 헤더 글자색 */
+  --c-cell-bg:    rgba(255, 255, 255, 0.90);   /* 셀 기본 배경 */
+  --c-cell-focus: #ffffff;                     /* 셀 포커스 배경 */
+  --c-cell-bd:    #90CAF9;                     /* 셀 테두리색 */
+
+  /* ── 주 버튼 (파란 그라데이션) ── */
+  --c-btn-top:         #78CFFA;   /* 기본 위쪽 색 */
+  --c-btn-bot:         #1278BE;   /* 기본 아래쪽 색 */
+  --c-btn-hover-top:   #99DBFC;   /* 호버 위쪽 */
+  --c-btn-hover-bot:   #1A90D0;   /* 호버 아래쪽 */
+  --c-btn-press-top:   #0E6BA8;   /* 클릭 위쪽 */
+  --c-btn-press-bot:   #084E80;   /* 클릭 아래쪽 */
+  --c-btn-bd:          #0D6FAA;   /* 버튼 테두리 */
+
+  /* ── 보조 버튼 (연한 파랑) ── */
+  --c-btn2-top:   #B8E4F5;
+  --c-btn2-bot:   #5AAED8;
+  --c-btn2-hover: #4498C5;
+
+  /* ── 위험 버튼 (빨강) ── */
+  --c-danger-top: #F5B8B8;
+  --c-danger-bot: #D85A5A;
+
+  /* ── 텍스트 ── */
+  --c-text-title: #063D6A;   /* 제목: 짙은 네이비 */
+  --c-text-label: #0D5A96;   /* 레이블: 중간 파랑 */
+  --c-text-body:  #1A2030;   /* 본문: 진한 남색 */
+  --c-disabled:   #8AAABB;   /* 비활성: 회청색 */
+
+  /* ── 기타 ── */
+  --c-accent:  #00B4D8;               /* 포인트 색상 */
+  --c-shadow:  rgba(0, 80, 160, 0.18); /* 그림자 색상 */
+
+  /* ── 폰트 ── */
+  /* system-ui: 운영체제 기본 폰트 (Windows: Segoe UI, Mac: SF Pro) */
+  --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  /* ── 공통 크기 ── */
+  --radius-panel: 14px;   /* 패널 모서리 둥글기 */
+  --radius-btn:    7px;   /* 버튼 모서리 둥글기 */
+  --radius-cell:   4px;   /* 셀/입력창 모서리 둥글기 */
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2. 전역 리셋 & body
+═══════════════════════════════════════════════════════════════════════════ */
+
+/*
+  CSS 박스 모델 통일
+  box-sizing: border-box → width/height 에 padding·border 포함
+  (기본값 content-box 는 padding·border 가 크기에 추가됨 → 계산이 복잡해짐)
+*/
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* html, body 를 100% 높이로 설정 → 앱이 뷰포트를 꽉 채울 수 있도록 */
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-main);
+  font-size: 14px;
+  color: var(--c-text-body);
+
+  /*
+    Frutiger Aero 핵심 배경: 하늘색 → 구름빛 세로 그라데이션
+    background-attachment: fixed → 스크롤해도 배경은 고정 (패럴랙스 느낌)
+  */
+  background: linear-gradient(180deg, var(--c-sky-top) 0%, var(--c-sky-bot) 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  padding: 12px 16px;
+  overflow-y: auto;   /* 내용이 길면 세로 스크롤 허용 */
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3. 앱 컨테이너 & 2컬럼 레이아웃
+═══════════════════════════════════════════════════════════════════════════ */
+
+/*
+  #app: 전체 앱을 감싸는 최상위 컨테이너
+  min-height: 100vh - 24px (패딩 제외) → 항상 화면 전체 높이를 채움
+  display:flex + flex-direction:column → 헤더와 메인 영역을 세로로 쌓음
+*/
+#app {
+  width: 100%;
+  max-width: none;                    /* 너비 제한 없이 전체 화면 사용 */
+  min-height: calc(100vh - 24px);     /* 상하 패딩 12px×2 제외 */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;                          /* 헤더와 메인 영역 사이 간격 */
+}
+
+/*
+  #main-content: 화면을 좌우 50:50 으로 나누는 CSS Grid 컨테이너
+  ─────────────────────────────────────────────────────────────
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)
+    - 1fr 1fr : 사용 가능한 너비를 두 열이 균등 분배 (각 50%)
+    - minmax(0, 1fr) : 최솟값 0 → 내용이 많아져도 컬럼이 50% 초과하지 않음
+  flex: 1 → 헤더를 제외한 남은 세로 공간을 모두 차지
+  min-height: 0 → flex child 가 내용보다 작아질 수 있도록 (overflow 방지)
+*/
+#main-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 왼쪽 컬럼: flex 세로 배치, 그리드 패널이 남은 높이 전부 차지하도록 */
+#left-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* 왼쪽의 그리드 패널: flex:1 로 #left-col 의 전체 높이 차지 */
+#left-col #grid-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* 오른쪽 컬럼: flex 세로 배치, 자식들이 갭을 두고 쌓임 */
+#right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   4. 헤더
+═══════════════════════════════════════════════════════════════════════════ */
+
+#app-header {
+  display: flex;
+  align-items: baseline;   /* 제목과 부제목을 기준선(baseline) 으로 정렬 */
+  gap: 12px;
+  padding: 2px 2px 6px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.6);  /* 반투명 흰 구분선 */
+  text-shadow: 0 1px 3px rgba(0, 80, 160, 0.2);       /* 부드러운 텍스트 그림자 */
+  flex-shrink: 0;   /* 높이 고정: 세로 공간 부족 시에도 헤더는 줄어들지 않음 */
+}
+
+#app-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--c-text-title);
+}
+
+#app-header .subtitle {
+  font-size: 12px;
+  color: var(--c-text-label);
+  opacity: 0.85;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   5. 유리 패널 (.panel)
+   ─────────────────────────────────────────────────────────────────────────
+   Frutiger Aero 의 핵심 시각 요소: 유리창처럼 보이는 패널
+
+   backdrop-filter: blur(12px)
+     → 패널 뒤쪽 배경을 흐리게 만들어 "진짜 유리" 느낌
+     → Chrome/Edge/Safari 지원, Firefox 는 플래그 설정 필요
+
+   inset 0 1px 0 rgba(255,255,255,0.8)
+     → 패널 상단 내부에 흰 빛 한 줄 → 빛이 위에서 비추는 느낌
+═══════════════════════════════════════════════════════════════════════════ */
+.panel {
+  background: var(--c-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);   /* Safari 접두사 */
+  border: 1px solid var(--c-glass-bd);
+  border-radius: var(--radius-panel);
+  box-shadow:
+    0 4px 20px var(--c-shadow),            /* 외부 그림자 */
+    inset 0 1px 0 rgba(255,255,255,0.8);   /* 상단 내부 광택 */
+  padding: 14px 16px;
+}
+
+/* 패널 내부 소제목 */
+.panel-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text-label);
+  margin-bottom: 8px;
+  letter-spacing: 0.02em;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   6. 구분자 선택 패널
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* 패널 자체: flex row → 제목과 라디오 버튼을 가로로 배치 */
+#separator-panel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+}
+
+/* 구분자 패널 제목: 아래 여백 제거 (flex 안에서 불필요) */
+#separator-panel .panel-title {
+  margin-bottom: 0;
+  white-space: nowrap;   /* 줄바꿈 방지 */
+}
+
+/* 라디오 버튼 그룹: 가로 나열 */
+.radio-group {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;   /* 화면 좁으면 줄바꿈 */
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--c-text-label);
+  font-size: 13px;
+  transition: color 0.15s;
+}
+
+.radio-label:hover { color: var(--c-text-title); }
+
+/* 라디오 버튼 자체: 크기 키우고 파란색으로 */
+.radio-label input[type="radio"] {
+  accent-color: var(--c-btn-bot);   /* 브라우저 기본 색을 파란색으로 오버라이드 */
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   7. 그리드 패널
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* 그리드 패널: 안쪽 여백 조정 */
+#grid-panel { padding: 12px 14px; }
+
+/* 컨트롤 버튼 행: flex wrap → 화면 좁으면 버튼 줄바꿈 */
+.grid-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+/* 버튼 그룹 구분선 */
+.ctrl-divider {
+  width: 1px;
+  height: 22px;
+  background: rgba(0, 90, 150, 0.25);
+  margin: 0 4px;
+}
+
+/*
+  그리드 스크롤 컨테이너
+  overflow: auto → 내용이 넘칠 때 가로·세로 스크롤 자동 표시
+  flex: 1 → 그리드 패널의 남은 높이를 모두 차지 (컨트롤 버튼 + 필터 제외)
+  min-height: 0 → flex child 가 내용보다 작게 줄어들 수 있도록 허용
+*/
+#grid-wrapper {
+  overflow: auto;
+  border-radius: var(--radius-cell);
+  border: 1px solid var(--c-cell-bd);
+  background: var(--c-cell-bg);
+  flex: 1;
+  min-height: 0;
+}
+
+/* 커스텀 스크롤바 스타일 (Chrome / Edge / Safari) */
+#grid-wrapper::-webkit-scrollbar { width: 8px; height: 8px; }
+#grid-wrapper::-webkit-scrollbar-track { background: rgba(180, 220, 245, 0.3); }
+#grid-wrapper::-webkit-scrollbar-thumb {
+  background: var(--c-hdr-bg);
+  border-radius: 4px;
+}
+#grid-wrapper::-webkit-scrollbar-thumb:hover { background: var(--c-btn-bot); }
+#grid-wrapper::-webkit-scrollbar-corner { background: transparent; }
+
+/*
+  그리드 테이블
+  border-collapse: collapse → 셀 사이 이중 테두리 제거
+  width: max-content → 셀 수에 맞게 가로로 늘어남 (스크롤로 확인)
+  min-width: 100% → 셀이 적어도 컨테이너 너비는 채움
+*/
+#csv-grid {
+  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+}
+
+/*
+  열/행 헤더 (<th>)
+  position: sticky + top:0 → 세로 스크롤 시 헤더가 화면 상단에 고정
+  z-index: 2 → 스크롤되는 셀 위에 표시
+  inset box-shadow → 상단 광택 라인
+*/
+#csv-grid th {
+  background: linear-gradient(180deg, #5DC0EC 0%, var(--c-hdr-bg) 100%);
+  color: var(--c-hdr-text);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  white-space: nowrap;
+  user-select: none;       /* 헤더 텍스트 선택 방지 */
+  min-width: 40px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+/*
+  첫 번째 헤더 셀 (코너 셀)
+  position: sticky + left:0 → 가로 스크롤 시 왼쪽에 고정
+  z-index: 3 → 다른 헤더보다 위에 (교차점에서 올바르게 표시)
+*/
+#csv-grid th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  min-width: 36px;
+}
+
+/*
+  행 번호 셀 (<td class="row-num">)
+  position: sticky + left:0 → 가로 스크롤 시 행 번호는 항상 왼쪽에 고정
+*/
+#csv-grid td.row-num {
+  background: linear-gradient(180deg, #5DC0EC 0%, var(--c-hdr-bg) 100%);
+  color: var(--c-hdr-text);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  padding: 3px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  user-select: none;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* 데이터 셀 컨테이너: 최소 패딩만 두고 input 이 대부분 차지 */
+#csv-grid td.data-cell {
+  padding: 2px;
+  border: 1px solid var(--c-cell-bd);
+}
+
+/* 셀 안의 텍스트 입력창 */
+#csv-grid td.data-cell input {
+  width: 110px;
+  height: 28px;
+  padding: 3px 6px;
+  font-family: var(--font-main);
+  font-size: 13px;
+  color: var(--c-text-body);
+  background: var(--c-cell-bg);
+  border: none;
+  outline: none;     /* 브라우저 기본 파란 외곽선 제거 (직접 스타일링) */
+  border-radius: 2px;
+  transition: background 0.1s, box-shadow 0.1s;
+}
+
+/* 셀 포커스 시: 흰 배경 + 파란 안쪽 테두리 */
+#csv-grid td.data-cell input:focus {
+  background: var(--c-cell-focus);
+  box-shadow: inset 0 0 0 2px var(--c-hdr-bg);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   8. 컬럼 필터 바
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* 필터 바 컨테이너: 반투명 하늘색 배경의 둥근 영역 */
+#col-filter-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: rgba(200, 235, 255, 0.5);
+  border-radius: 8px;
+  border: 1px solid rgba(144, 202, 249, 0.5);
+}
+
+.filter-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-label);
+  white-space: nowrap;
+}
+
+#col-filter-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/*
+  컬럼 체크박스 레이블: pill (알약) 형태
+  border-radius: 12px → 양쪽이 완전히 둥근 알약 모양
+*/
+.col-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--c-cell-bd);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-label);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  user-select: none;
+}
+
+.col-checkbox-label:hover { background: rgba(59, 170, 222, 0.15); }
+
+/* 체크 해제된 컬럼: 회색 + 취소선 → 제외된 열임을 시각적으로 표시 */
+.col-checkbox-label.unchecked {
+  color: var(--c-disabled);
+  border-color: rgba(160, 180, 200, 0.5);
+  background: rgba(200, 210, 220, 0.3);
+  text-decoration: line-through;
+}
+
+.col-checkbox-label input[type="checkbox"] {
+  accent-color: var(--c-btn-bot);
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   9. 접두 문자열 패널
+═══════════════════════════════════════════════════════════════════════════ */
+
+#prefix-panel {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;   /* 오른쪽 컬럼에서 이 패널의 높이를 줄이지 않음 */
+}
+
+#prefix-text {
+  width: 100%;
+  height: 120px;    /* 고정 높이 */
+  padding: 10px 12px;
+  font-family: var(--font-main);
+  font-size: 13px;
+  color: var(--c-text-body);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--c-cell-bd);
+  border-radius: var(--radius-cell);
+  resize: vertical;   /* 사용자가 세로로만 크기 조절 가능 */
+  outline: none;
+  line-height: 1.6;
+  transition: box-shadow 0.15s, background 0.15s;
+}
+
+/* 포커스 시: 흰 배경 + 파란 외곽선 */
+#prefix-text:focus {
+  background: #fff;
+  box-shadow: 0 0 0 2px var(--c-hdr-bg);
+}
+
+/* placeholder 텍스트: 회청색 이탤릭 */
+#prefix-text::placeholder {
+  color: #aac4d8;
+  font-style: italic;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   10. 버튼 스타일
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* 액션 버튼 컨테이너 */
+#action-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/*
+  주 버튼 (.btn-primary): 가장 중요한 동작 강조
+  ─────────────────────────────────────────────
+  Frutiger Aero 광택 버튼 구현 원리:
+    1. 위→아래 그라데이션: 빛이 위에서 아래로 비추는 느낌
+    2. inset 0 1px 0 rgba(흰색,0.45): 상단 밝은 하이라이트 라인
+    3. box-shadow: 버튼 입체감 (부드러운 그림자)
+*/
+.btn-primary {
+  padding: 10px 22px;
+  font-family: var(--font-main);
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(180deg, var(--c-btn-top) 0%, var(--c-btn-bot) 100%);
+  border: 1px solid var(--c-btn-bd);
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  box-shadow:
+    0 2px 6px rgba(0, 80, 160, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  transition: background 0.15s, box-shadow 0.15s, transform 0.08s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(180deg, var(--c-btn-hover-top) 0%, var(--c-btn-hover-bot) 100%);
+  box-shadow:
+    0 3px 10px rgba(0, 80, 160, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* 클릭 시: 어둡게 + 1px 아래로 → 눌린 느낌 */
+.btn-primary:active {
+  background: linear-gradient(180deg, var(--c-btn-press-top) 0%, var(--c-btn-press-bot) 100%);
+  transform: translateY(1px);
+  box-shadow:
+    0 1px 3px rgba(0, 80, 160, 0.3),
+    inset 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* 보조 버튼 (.btn-secondary): 연한 파랑 */
+.btn-secondary {
+  padding: 7px 14px;
+  font-family: var(--font-main);
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(180deg, var(--c-btn2-top) 0%, var(--c-btn2-bot) 100%);
+  border: 1px solid rgba(0, 100, 160, 0.4);
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  box-shadow:
+    0 2px 4px rgba(0, 80, 160, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: background 0.15s, box-shadow 0.15s, transform 0.08s;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(180deg, #caeef9 0%, var(--c-btn2-hover) 100%);
+  box-shadow: 0 3px 7px rgba(0, 80, 160, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.btn-secondary:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* 위험 버튼 변형: 빨간 그라데이션 (그리드 초기화 등 되돌리기 어려운 동작) */
+.btn-secondary.btn-danger {
+  background: linear-gradient(180deg, var(--c-danger-top) 0%, var(--c-danger-bot) 100%);
+  border-color: rgba(160, 0, 0, 0.3);
+}
+
+.btn-secondary.btn-danger:hover {
+  background: linear-gradient(180deg, #fac8c8 0%, #c04040 100%);
+}
+
+/* 미니 버튼: 컬럼 필터 전체선택/해제 등 소형 UI 요소에 사용 */
+.btn-mini {
+  padding: 4px 10px;
+  font-family: var(--font-main);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(180deg, var(--c-btn2-top) 0%, var(--c-btn2-bot) 100%);
+  border: 1px solid rgba(0, 100, 160, 0.35);
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 80, 160, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  transition: background 0.15s, transform 0.08s;
+}
+
+.btn-mini:hover { background: linear-gradient(180deg, #caeef9 0%, var(--c-btn2-hover) 100%); }
+.btn-mini:active { transform: translateY(1px); }
+
+/*
+  <kbd> 태그: 키보드 단축키를 시각적으로 표현
+  예) <kbd>Ctrl + Enter</kbd> → 키캡처럼 보이는 스타일
+*/
+kbd {
+  display: inline-block;
+  padding: 2px 7px;
+  font-family: var(--font-main);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-btn-bot);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 100, 180, 0.35);
+  border-radius: 4px;
+  box-shadow: 0 1px 0 rgba(0, 80, 160, 0.2);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   11. 출력 미리보기 패널
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* 출력 패널: 오른쪽 컬럼에서 남은 높이를 모두 차지 */
+#output-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;       /* 오른쪽 컬럼의 남은 세로 공간 전부 사용 */
+  min-height: 0;
+}
+
+/*
+  출력 미리보기 <pre>
+  flex: 1 → 패널 안의 남은 높이 채우기
+  white-space: pre → 공백·줄바꿈을 있는 그대로 표시 (CSV 형태 유지)
+  font-family monospace → CSV 열이 정렬되어 보임
+*/
+#output-preview {
+  margin-top: 4px;
+  padding: 12px 14px;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid var(--c-cell-bd);
+  border-radius: var(--radius-cell);
+  font-family: 'Consolas', 'D2Coding', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--c-text-body);
+  white-space: pre;
+  word-break: break-all;
+}
+
+#output-preview::-webkit-scrollbar { width: 7px; height: 7px; }
+#output-preview::-webkit-scrollbar-track { background: rgba(180, 220, 245, 0.2); }
+#output-preview::-webkit-scrollbar-thumb { background: var(--c-hdr-bg); border-radius: 4px; }
+
+/* 안내 문구 스타일: 회청색 이탤릭 */
+.placeholder { color: #aac4d8; font-style: italic; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   12. 토스트 알림 (#toast)
+   ─────────────────────────────────────────────────────────────────────────
+   화면 하단 중앙에 잠깐 나타났다 사라지는 알림 메시지
+
+   기본 상태: opacity:0 (투명), translateY(20px) (약간 아래로 내려진 상태)
+   .show 클래스 추가 시:
+     opacity: 1      → 보임
+     translateY(0)   → 원래 위치로 올라옴
+   transition: 0.25s 부드럽게 애니메이션
+
+   position: fixed → 스크롤과 무관하게 뷰포트 기준으로 위치 고정
+   pointer-events: none → 알림이 뜬 상태에서도 클릭 통과
+═══════════════════════════════════════════════════════════════════════════ */
+#toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  padding: 10px 22px;
+  background: rgba(10, 60, 110, 0.88);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+  z-index: 999;
+  white-space: nowrap;
+}
+
+/* .show 클래스 추가 시 토스트가 나타남 */
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
